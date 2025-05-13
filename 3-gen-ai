@@ -1,0 +1,42 @@
+import nltk
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+from nltk.tokenize import word_tokenize
+from gensim.models import Word2Vec
+
+nltk.download('punkt')
+
+corpus = [
+    "The patient was diagnosed with diabetes and hypertension.",
+    "MRI scans reveal abnormalities in the brain tissue.",
+    "The treatment involves antibiotics and regular monitoring.",
+    "Symptoms include fever, fatigue, and muscle pain.",
+    "The vaccine is effective against several viral infections.",
+    "Doctors recommend physical therapy for recovery.",
+    "The clinical trial results were published in the journal.",
+    "The surgeon performed a minimally invasive procedure.",
+    "The prescription includes pain relievers and anti-inflammatory drugs.",
+    "The diagnosis confirmed a rare genetic disorder."
+]
+
+tokenized = [word_tokenize(sent.lower()) for sent in corpus]
+model = Word2Vec(sentences=tokenized, vector_size=100, window=5, min_count=1, workers=4)
+model.save("custom_word2vec.model")
+print("Model trained and saved!")
+
+def get_similar(word, top_n=5):
+    return model.wv.most_similar(word, topn=top_n) if word in model.wv else f"'{word}' not found"
+
+# t-SNE plot
+words = list(model.wv.index_to_key)
+vectors = np.array([model.wv[w] for w in words])
+embeddings_2d = TSNE(n_components=2, perplexity=3, random_state=42).fit_transform(vectors)
+
+plt.figure(figsize=(8, 6))
+plt.scatter(*embeddings_2d.T, color='blue')
+for i, word in enumerate(words):
+    plt.annotate(word, embeddings_2d[i], fontsize=12)
+plt.title("t-SNE Projection of Medical Word Embeddings")
+plt.grid()
+plt.show()
