@@ -1,0 +1,28 @@
+!pip install --upgrade gensim scipy
+import numpy as np, matplotlib.pyplot as plt
+from gensim.models.fasttext import load_facebook_model
+from gensim.models import KeyedVectors
+from sklearn.decomposition import PCA
+
+# Load models
+ft = load_facebook_model("/kaggle/input/cc-en-300-bin/cc.en.300.bin")
+w2v = KeyedVectors.load_word2vec_format("/kaggle/input/google-word2vec/GoogleNews-vectors-negative300.bin", binary=True)
+print("Models loaded!")
+
+# Print sample vectors
+print("king:", ft.wv["king"][:5])
+print("queen:", ft.wv["queen"][:5])
+
+# PCA Visualization
+words = ['Lawyer','Judge','Court','Fruit','Quantum','Encryption','database','computernetworks','Cybersecurity','Artificialintelligence']
+vecs = np.array([ft.wv[w] for w in words])
+pca = PCA(n_components=2).fit_transform(vecs)
+plt.figure(figsize=(10, 8))
+plt.scatter(*pca.T, color='blue')
+for i, w in enumerate(words): plt.annotate(w, pca[i], fontsize=12)
+plt.title("2D PCA projection of word embeddings")
+plt.grid(); plt.show()
+
+# Similar words
+def similar(word): return w2v.most_similar(word, topn=5) if word in w2v else f"'{word}' not in vocab"
+print("Similar to 'king':", similar("king"))
